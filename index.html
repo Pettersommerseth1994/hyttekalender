@@ -3,21 +3,49 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
 <title>Hyttekalender</title>
+<script>
+  /* Fargepaletter. Velg med ?palett=navn. Tema kan tvinges med ?tema=lys|mork. */
+  const PALETTER = {
+    original: { navn: 'Original',
+      lys:  { bg: '#faf8f5', surface: '#ffffff', text: '#1f2430', muted: '#646b78', line: '#e7e2da', p: '#f2b36f', pInk: '#4a2800', rp: '#9db8f0', rpInk: '#10224f' },
+      mork: { bg: '#14161a', surface: '#1d2026', text: '#eceef2', muted: '#9aa1ad', line: '#2c3039', p: '#9a5c14', pInk: '#fff3e3', rp: '#3d5cb0', rpInk: '#eef3ff' } },
+    fjord: { navn: 'Fjord og rust',
+      lys:  { bg: '#f5f1ec', surface: '#ffffff', text: '#1f2326', muted: '#646a70', line: '#e4ddd4', p: '#e3936b', pInk: '#3d1503', rp: '#7fb7bd', rpInk: '#0c3236' },
+      mork: { bg: '#121516', surface: '#1b2022', text: '#e9ecec', muted: '#98a1a3', line: '#2a3134', p: '#a8512b', pInk: '#fff1e8', rp: '#2d6f76', rpInk: '#e8fbfc' } },
+    skog: { navn: 'Skog og lyng',
+      lys:  { bg: '#f4f4ef', surface: '#ffffff', text: '#1d221c', muted: '#626a60', line: '#e0e3d9', p: '#c99bc4', pInk: '#3a1036', rp: '#9cc29a', rpInk: '#13301a' },
+      mork: { bg: '#111410', surface: '#191e18', text: '#e8ece6', muted: '#96a093', line: '#283026', p: '#7e4a79', pInk: '#fbeefa', rp: '#3f6e43', rpInk: '#ecf8ec' } },
+    nordlys: { navn: 'Nordlys',
+      lys:  { bg: '#f3f5f8', surface: '#ffffff', text: '#141a24', muted: '#5c6575', line: '#dfe4ec', p: '#f29bc0', pInk: '#4a0b28', rp: '#7fdcbc', rpInk: '#053626' },
+      mork: { bg: '#0b0f1a', surface: '#131a2a', text: '#e8edf7', muted: '#8f9ab0', line: '#222c42', p: '#b8336f', pInk: '#fff0f6', rp: '#0f7a61', rpInk: '#e9fff7' } },
+    sorbet: { navn: 'Sorbet',
+      lys:  { bg: '#fffaf6', surface: '#ffffff', text: '#2b2330', muted: '#6f6575', line: '#f0e6e0', p: '#ffc2a8', pInk: '#4d1d08', rp: '#c9bbf5', rpInk: '#2a1a5e' },
+      mork: { bg: '#17131a', surface: '#211b25', text: '#f1eaf3', muted: '#a497a8', line: '#33293a', p: '#a5573a', pInk: '#fff1ea', rp: '#5b4aa6', rpInk: '#f1edff' } },
+    kontrast: { navn: 'Kontrast',
+      lys:  { bg: '#f4f4f5', surface: '#ffffff', text: '#09090b', muted: '#52525b', line: '#e4e4e7', p: '#ff6a3d', pInk: '#1c0500', rp: '#4f46e5', rpInk: '#ffffff' },
+      mork: { bg: '#09090b', surface: '#18181b', text: '#fafafa', muted: '#a1a1aa', line: '#27272a', p: '#ff6a3d', pInk: '#1c0500', rp: '#4f46e5', rpInk: '#ffffff' } },
+  };
+
+  const params = new URLSearchParams(location.search);
+  const PAL = PALETTER[params.get('palett')] ? params.get('palett') : 'original';
+  const MODE = params.get('airbnb') === 'av' ? '' : 'stolper';   // Airbnb vises som stolper. ?airbnb=av skjuler dem.
+  const TEMA = params.get('tema');
+  const root = document.documentElement;
+  root.dataset.airbnb = MODE;
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  function applyPalette() {
+    const dark = TEMA === 'mork' || (TEMA !== 'lys' && mq.matches);
+    for (const [k, v] of Object.entries(PALETTER[PAL][dark ? 'mork' : 'lys']))
+      root.style.setProperty('--' + k.replace(/[A-Z]/g, m => '-' + m.toLowerCase()), v);
+    root.style.colorScheme = dark ? 'dark' : 'light';
+  }
+  applyPalette();
+  mq.addEventListener('change', applyPalette);
+</script>
 <style>
-  :root {
-    --bg: #faf8f5; --surface: #ffffff; --text: #1f2430; --muted: #646b78; --line: #e7e2da;
-    --p: #f2b36f;  --p-ink: #4a2800;
-    --rp: #9db8f0; --rp-ink: #10224f;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #14161a; --surface: #1d2026; --text: #eceef2; --muted: #9aa1ad; --line: #2c3039;
-      --p: #9a5c14;  --p-ink: #fff3e3;
-      --rp: #3d5cb0; --rp-ink: #eef3ff;
-    }
-  }
+  :root { --airbnb: #ff385c; --air: var(--text); --air-ink: var(--surface);
+          --block-bg: color-mix(in srgb, var(--muted) 30%, var(--surface)); }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text);
          font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
@@ -34,24 +62,29 @@
   .hero small { display: block; font-size: .85rem; opacity: .85; }
   .hero .big { font-size: 2rem; font-weight: 700; line-height: 1.15; margin: 2px 0 6px; }
   .hero .next { margin-top: 16px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); font-size: .95rem; }
-  .hero .next .chip { background: color-mix(in srgb, var(--ink) 14%, transparent); }
+  .hero .airnow { display: inline-block; margin-top: 12px; padding: 6px 12px; border-radius: 10px; font-size: .9rem;
+                  background: color-mix(in srgb, var(--ink) 12%, transparent); }
+  .hero.is-air { --ink: var(--air-ink); background: var(--air); color: var(--air-ink); box-shadow: inset 8px 0 0 var(--c); padding-left: 26px; }
 
-  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0 0; font-size: .9rem; color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 14px 0 0; font-size: .9rem; color: var(--muted); align-items: center; }
+  .key { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { position: relative; display: inline-block; width: 22px; height: 16px; border-radius: 5px; background: var(--c); }
+  .pill { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+  .pill.air { background: var(--air); color: var(--air-ink); }
+  .pill.blk { background: var(--block-bg); color: var(--text); }
+  .lk { display: inline-block; width: 22px; height: 5px; border-radius: 3px; background: var(--airbnb); }
+  .lk.b { background: var(--muted); opacity: .55; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px 14px 12px; margin-bottom: 12px; }
   .card h3 { margin: 0; font-size: 1rem; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: baseline; }
   .card h3 span { font-weight: 400; color: var(--muted); font-size: .9rem; }
   .days { display: flex; flex-wrap: wrap; gap: 3px; margin: 10px 0; }
-  .day { width: 38px; padding: 3px 0; border-radius: 6px; text-align: center; background: var(--c); color: var(--ink); line-height: 1.15; }
+  .day { position: relative; width: 38px; padding: 3px 0; border-radius: 6px; text-align: center; background: var(--c); color: var(--ink); line-height: 1.15; }
   .day small { display: block; font-size: .65rem; text-transform: uppercase; letter-spacing: .02em; opacity: .85; }
   .day b { font-size: .9rem; }
   .blocks { list-style: none; margin: 0; padding: 0; font-size: .92rem; }
   .blocks li { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; margin-top: 4px; }
   .blocks .when { color: var(--muted); }
-
-  details { margin-top: 8px; }
-  summary { cursor: pointer; color: var(--muted); font-size: .9rem; margin-bottom: 10px; }
-  .past .card { opacity: .6; }
 
   .weeks { list-style: none; margin: 0; padding: 0; }
   .week { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
@@ -61,9 +94,69 @@
   .week .wk span { color: var(--muted); font-size: .9rem; }
   .week .tag { font-size: .78rem; color: var(--muted); margin-left: 6px; }
   .strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; margin-top: 8px; }
-  .strip div { background: var(--c); color: var(--ink); border-radius: 5px; text-align: center; font-size: .72rem; padding: 3px 0; font-weight: 600; }
+  .strip div { position: relative; background: var(--c); color: var(--ink); border-radius: 5px; text-align: center; font-size: .72rem; padding: 3px 0; font-weight: 600; }
   button { font: inherit; background: none; border: 1px solid var(--line); color: var(--text); padding: 8px 14px; border-radius: 10px; cursor: pointer; }
   footer { margin-top: 36px; font-size: .85rem; color: var(--muted); }
+
+  .rentline { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 8px; font-size: .84rem; color: var(--muted); }
+  .rentline span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--mk); margin-right: 6px; }
+  .rentline b { color: var(--text); font-weight: 600; }
+
+  /* A · Stolper (som i Airbnb sin egen kalender) */
+  [data-airbnb="stolper"] .day { height: 64px; }
+  [data-airbnb="stolper"] .strip div { height: 46px; }
+  .band { position: absolute; bottom: 5px; height: 18px; background: var(--air); z-index: 1; }
+  .band.start { left: 50%; right: -3px; border-radius: 9px 0 0 9px; }
+  .band.mid   { left: 0; right: -3px; }
+  .band.end   { left: 0; right: 50%; border-radius: 0 9px 9px 0; }
+  .band.start.tight { left: calc(50% + 2px); }
+  .band.end.tight { right: calc(50% + 2px); }
+  .band.last { right: 0; }
+  .band.blk { background: var(--block-bg); }
+  .blabel { position: absolute; bottom: 5px; left: calc(50% + 7px); z-index: 2; height: 18px; line-height: 18px; font-size: .68rem; font-weight: 700;
+            color: var(--air-ink); white-space: nowrap; pointer-events: none; text-transform: none; letter-spacing: 0; opacity: 1;
+            overflow: hidden; text-overflow: ellipsis; }
+  .blabel.tight { left: calc(50% + 9px); }
+  .blabel.cont { left: 6px; }
+  .blabel.blk { color: var(--text); }
+
+  /* B · Striper */
+  [data-airbnb="striper"] .rented { background-image: repeating-linear-gradient(135deg, transparent 0 4px, color-mix(in srgb, var(--surface) 75%, transparent) 4px 8px); }
+  [data-airbnb="striper"] .blocked { box-shadow: inset 0 0 0 2px var(--text); }
+
+  /* C · Eget spor */
+  [data-airbnb="spor"] .days { row-gap: 13px; margin-bottom: 14px; }
+  [data-airbnb="spor"] .strip { margin-bottom: 9px; }
+  .lane { position: absolute; left: 0; right: 0; bottom: -9px; height: 5px; background: var(--airbnb); }
+  .lane.b { background: var(--muted); opacity: .55; }
+  .lane.cont { right: -3px; }
+  .lane.first { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+  .lane.lastn { border-top-right-radius: 3px; border-bottom-right-radius: 3px; }
+
+  /* D · Utleid som egen farge */
+  [data-airbnb="farge"] .rented { background: var(--air); color: var(--air-ink); box-shadow: inset 0 4px 0 var(--c); }
+  [data-airbnb="farge"] .blocked { background: var(--block-bg); color: var(--muted); box-shadow: inset 0 4px 0 var(--c); }
+  [data-airbnb="farge"] .day.blocked b, [data-airbnb="farge"] .strip .blocked { text-decoration: line-through; }
+
+  /* E · Prikk + egen utleieoversikt */
+  [data-airbnb="liste"] .rented::after, [data-airbnb="liste"] .blocked::after {
+    content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px; border-radius: 50%; }
+  [data-airbnb="liste"] .rented::after { background: var(--airbnb); box-shadow: 0 0 0 1.5px var(--surface); }
+  [data-airbnb="liste"] .blocked::after { border: 1.5px solid var(--ink); width: 5px; height: 5px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .stat small { display: block; color: var(--muted); font-size: .8rem; }
+  .stat b { display: block; font-size: 1.05rem; margin: 2px 0; }
+  .stat span { font-size: .85rem; color: var(--muted); }
+  .rlist { list-style: none; margin: 12px 0 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+  .rlist li { display: flex; justify-content: space-between; align-items: center; gap: 6px 10px; padding: 10px 14px; flex-wrap: wrap; }
+  .rlist li + li { border-top: 1px solid var(--line); }
+  .rlist .g { font-weight: 600; }
+  .rlist .g::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--airbnb); margin-right: 8px; }
+  .rlist .g.b::before { background: var(--muted); }
+  .rlist .d { color: var(--muted); font-size: .88rem; }
+  .rlist .chips { display: flex; gap: 6px; }
+  .rlist .chip { font-size: .78rem; }
 </style>
 </head>
 <body>
@@ -71,6 +164,8 @@
   <h1>Hyttekalender</h1>
   <section id="hero" class="hero" aria-live="polite"></section>
   <div class="legend" id="legend"></div>
+
+  <section id="rent"></section>
 
   <h2>Ferier</h2>
   <div id="holidays"></div>
@@ -83,31 +178,43 @@
 </main>
 
 <script>
-/* ===== Rediger her =====================================================
-   Vanlige uker: partallsuker = P, oddetallsuker = RP (helg følger uka, man–søn).
-   Ferier overstyrer uka. Hver blokk: [hvem, fra, til] – begge datoer inkludert.
-   Aldri "sammen": hver dag har nøyaktig én som har hytta.
-   Test en annen dato: legg til ?dato=2026-12-22 i adressen.
-======================================================================== */
+/* ===== Rediger her ===================================================== */
 const OWNERS = {
-  P:  { name: 'Petter' },
-  RP: { name: 'Ragnhild & Preben' },
+  P:  { name: 'Petter',            short: 'Petter', gen: 'Petters' },
+  RP: { name: 'Ragnhild & Preben', short: 'R & P',  gen: 'Ragnhild & Prebens' },
 };
 
 const HOLIDAYS = [
-  { name: 'Jul/nyttår 26', blocks: [['RP', '2026-12-20', '2026-12-27'], ['P',  '2026-12-28', '2027-01-03']] },
+  { name: 'Jul/nyttår 26',  blocks: [['RP', '2026-12-20', '2026-12-27'], ['P',  '2026-12-28', '2027-01-03']] },
   { name: 'Vinterferie 27', blocks: [['RP', '2027-02-19', '2027-02-22'], ['P',  '2027-02-23', '2027-02-28']] },
   { name: 'Påske 27',       blocks: [['RP', '2027-03-19', '2027-03-23'], ['P',  '2027-03-24', '2027-03-29']] },
   { name: 'Høst 27',        blocks: [['P',  '2027-10-01', '2027-10-05'], ['RP', '2027-10-06', '2027-10-10']] },
 ];
-/* ======================================================================== */
 
-const DAY = 86400000;
-const WD = ['søn','man','tir','ons','tor','fre','lør'];
-const MON = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+// Airbnb: inn = innsjekk, ut = utsjekk. Nettene er fra inn til dagen før ut.
+const AIRBNB = [
+  { gjest: 'Niki',       ekstra: 2, inn: '2026-11-13', ut: '2026-11-15' },
+  { gjest: 'Adrianna',   ekstra: 4, inn: '2026-12-23', ut: '2026-12-26' },
+  { gjest: 'Jan',        ekstra: 1, inn: '2026-12-26', ut: '2026-12-30' },
+  { gjest: 'Samuel',     ekstra: 1, inn: '2026-12-31', ut: '2027-01-03' },
+  { gjest: 'Linus',      ekstra: 1, inn: '2027-01-14', ut: '2027-01-17' },
+  { gjest: 'Emma Sofie', ekstra: 4, inn: '2027-01-29', ut: '2027-01-31' },
+  { gjest: 'Helena',     ekstra: 5, inn: '2027-03-25', ut: '2027-03-29' },
+];
+// Blokkert i Airbnb (ikke utleid). who = hvem som blokkerte, eller null hvis ukjent.
+const BLOKKERT = [
+  { who: null, inn: '2026-12-30', ut: '2026-12-31' },
+  { who: 'P',  inn: '2027-02-24', ut: '2027-02-28' },
+];
+/* ======================================================================= */
+
+const DAY = 864e5;
+const WD = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'];
+const MON = ['jan', 'feb', 'mar', 'apr', 'mai', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'des'];
 const parse = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+const wd = t => new Date(t).getUTCDay();
 const dnum = t => new Date(t).getUTCDate();
-const fmt = t => { const d = new Date(t); return `${WD[d.getUTCDay()]} ${d.getUTCDate()}. ${MON[d.getUTCMonth()]}`; };
+const fmt = t => `${WD[wd(t)]} ${dnum(t)}. ${MON[new Date(t).getUTCMonth()]}`;
 const fmtRange = (a, b) => {
   const A = new Date(a), B = new Date(b);
   return A.getUTCMonth() === B.getUTCMonth()
@@ -115,28 +222,65 @@ const fmtRange = (a, b) => {
     : `${A.getUTCDate()}. ${MON[A.getUTCMonth()]} – ${B.getUTCDate()}. ${MON[B.getUTCMonth()]}`;
 };
 const isoWeek = t => {
-  const day = (new Date(t).getUTCDay() + 6) % 7;                // man = 0
-  const thu = t + (3 - day) * DAY;
+  const thu = t + (3 - (wd(t) + 6) % 7) * DAY;
   return Math.floor((thu - Date.UTC(new Date(thu).getUTCFullYear(), 0, 1)) / DAY / 7) + 1;
 };
-const mondayOf = t => t - ((new Date(t).getUTCDay() + 6) % 7) * DAY;
+const mondayOf = t => t - ((wd(t) + 6) % 7) * DAY;
+const rel = n => n === 0 ? 'i dag' : n === 1 ? 'i morgen' : `om ${n} dager`;
 
-const holidays = HOLIDAYS.map(h => ({
-  ...h,
-  blocks: h.blocks.map(([who, f, t]) => ({ who, from: parse(f), to: parse(t) })),
-})).map(h => ({ ...h, from: Math.min(...h.blocks.map(b => b.from)), to: Math.max(...h.blocks.map(b => b.to)) }));
-
+const holidays = HOLIDAYS.map(h => {
+  const blocks = h.blocks.map(([who, f, t]) => ({ who, from: parse(f), to: parse(t) }));
+  return { ...h, blocks, from: Math.min(...blocks.map(b => b.from)), to: Math.max(...blocks.map(b => b.to)) };
+});
 function ownerOn(t) {
   for (const h of holidays) for (const b of h.blocks) if (t >= b.from && t <= b.to) return { who: b.who, holiday: h };
-  const inHoliday = holidays.find(h => t >= h.from && t <= h.to);   // hull i en ferie: følg ukeregelen
-  return { who: isoWeek(t) % 2 === 0 ? 'P' : 'RP', holiday: inHoliday || null };
+  return { who: isoWeek(t) % 2 === 0 ? 'P' : 'RP', holiday: holidays.find(h => t >= h.from && t <= h.to) || null };
 }
 
-const q = new URLSearchParams(location.search).get('dato');
+const q = params.get('dato');
 const now = new Date();
 const today = q && /^\d{4}-\d{2}-\d{2}$/.test(q) ? parse(q) : Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
 
-const chip = who => `<span class="chip o-${who}">${OWNERS[who].name}</span>`;
+/* Airbnb-opphold */
+const stays = MODE ? [
+  ...AIRBNB.map(b => ({ kind: 'r', label: `${b.gjest} + ${b.ekstra}`, inn: parse(b.inn), ut: parse(b.ut) })),
+  ...BLOKKERT.map(b => ({ kind: 'b', who: b.who, label: b.who ? `Blokkert · ${OWNERS[b.who].short}` : 'Blokkert', inn: parse(b.inn), ut: parse(b.ut) })),
+].sort((a, b) => a.inn - b.inn) : [];
+const nights = s => Math.round((s.ut - s.inn) / DAY);
+const nightAt = t => stays.find(s => t >= s.inn && t < s.ut) || null;
+const staysIn = (a, b) => stays.filter(s => s.inn <= b && s.ut > a);
+const markColor = s => s.kind === 'b' ? 'var(--muted)' : (MODE === 'spor' || MODE === 'liste') ? 'var(--airbnb)' : 'var(--air)';
+const rentline = list => list.length ? `<div class="rentline">${list.map(s =>
+  `<span style="--mk:${markColor(s)}"><b>${s.label}</b> ${fmtRange(s.inn, s.ut)}${s.kind === 'r' ? ` · ${nights(s)} ${nights(s) === 1 ? 'natt' : 'netter'}` : ''}</span>`).join('')}</div>` : '';
+
+// Ekstra klasser og innhold for én dagcelle.
+function deco(t, firstInRow, lastInRow) {
+  if (!MODE) return { cls: '', html: '' };
+  const n = nightAt(t);
+  const cls = n ? (n.kind === 'r' ? ' rented' : ' blocked') : '';
+  let html = '';
+  if (MODE === 'stolper') {
+    const touching = stays.filter(s => t >= s.inn && t <= s.ut);
+    const tight = touching.length > 1 ? ' tight' : '';
+    for (const s of touching) {
+      const k = stays.indexOf(s);
+      const part = t === s.inn ? 'start' : t === s.ut ? 'end' : 'mid';
+      const blk = s.kind === 'b' ? ' blk' : '';
+      html += `<span class="band ${part}${blk}${tight}${part !== 'end' && lastInRow ? ' last' : ''}" data-s="${k}"></span>`;
+      const showLabel = !(s.kind === 'b' && nights(s) === 1) && (part === 'start' || (part === 'mid' && firstInRow));
+      if (showLabel) html += `<span class="blabel${part === 'mid' ? ' cont' : ''}${blk}${tight}" data-s="${k}">${s.label}</span>`;
+    }
+  }
+  if (MODE === 'spor' && n) {
+    const cont = t + DAY < n.ut && !lastInRow;
+    html += `<span class="lane ${n.kind}${t === n.inn || firstInRow ? ' first' : ''}${t + DAY === n.ut || lastInRow ? ' lastn' : ''}${cont ? ' cont' : ''}"></span>`;
+  }
+  return { cls, html };
+}
+const dayTitle = (t, o) => {
+  const n = nightAt(t);
+  return `${fmt(t)}: ${OWNERS[o.who].name}${o.holiday ? ' (' + o.holiday.name + ')' : ''}${n ? ' · ' + (n.kind === 'r' ? 'utleid til ' : '') + n.label : ''}`;
+};
 
 /* Hero */
 (function () {
@@ -144,33 +288,85 @@ const chip = who => `<span class="chip o-${who}">${OWNERS[who].name}</span>`;
   let end = today;
   while (ownerOn(end + DAY).who === cur.who) end += DAY;
   const next = ownerOn(end + DAY);
-  const wk = isoWeek(today);
+  const stay = nightAt(today);
   const el = document.getElementById('hero');
+  const nextLine = `Deretter: <b>${OWNERS[next.who].name}</b> fra ${fmt(end + DAY)}${next.holiday ? ' (' + next.holiday.name + ')' : ''}`;
+  if (MODE === 'farge' && stay) {
+    el.className = `hero is-air o-${cur.who}`;
+    el.innerHTML = `
+      <small>${stay.kind === 'r' ? 'Utleid på Airbnb nå' : 'Blokkert i Airbnb'} · ${OWNERS[cur.who].gen} uke</small>
+      <div class="big">${stay.kind === 'r' ? stay.label : OWNERS[cur.who].name}</div>
+      <div>${stay.kind === 'r' ? 'Utsjekk' : 'Til'} ${fmt(stay.ut)}</div>
+      <div class="next">${OWNERS[cur.who].name} har uka til og med ${fmt(end)}. ${nextLine}</div>`;
+    return;
+  }
   el.className = `hero o-${cur.who}`;
+  const air = stay ? `<div class="airnow">${stay.kind === 'r'
+    ? `Utleid på Airbnb: <b>${stay.label}</b> · utsjekk ${fmt(stay.ut)}`
+    : `Blokkert i Airbnb til ${fmt(stay.ut)}`}</div>` : '';
   el.innerHTML = `
     <small>Hytta har nå</small>
     <div class="big">${OWNERS[cur.who].name}</div>
-    <div>Uke ${wk}${cur.holiday ? ' · ' + cur.holiday.name : ''} · til og med ${fmt(end)}</div>
-    <div class="next">Deretter: <b>${OWNERS[next.who].name}</b> fra ${fmt(end + DAY)}${next.holiday ? ' (' + next.holiday.name + ')' : ''}</div>`;
-  document.getElementById('legend').innerHTML =
-    `<span>${chip('P')}</span><span>${chip('RP')}</span>`;
+    <div>Uke ${isoWeek(today)}${cur.holiday ? ' · ' + cur.holiday.name : ''} · til og med ${fmt(end)}</div>
+    ${air}
+    <div class="next">${nextLine}</div>`;
 })();
+
+/* Forklaring */
+(function () {
+  const KEYS = {
+    stolper: `<span class="key"><span class="pill air">Navn + 2</span>Airbnb-gjest</span><span class="key"><span class="pill blk">Blokkert</span>ikke utleid</span>`,
+    striper: `<span class="key"><span class="sw o-P rented"></span><span class="sw o-RP rented"></span>Utleid</span><span class="key"><span class="sw o-P blocked"></span>Blokkert</span>`,
+    spor:    `<span class="key"><span class="lk"></span>Utleid (Airbnb)</span><span class="key"><span class="lk b"></span>Blokkert</span>`,
+    farge:   `<span class="key"><span class="sw o-P rented"></span>Utleid</span><span class="key"><span class="sw o-P blocked"></span>Blokkert</span><span class="key">Stripe øverst = hvem sin uke</span>`,
+    liste:   `<span class="key"><span class="sw o-P rented"></span>Utleid</span><span class="key"><span class="sw o-P blocked"></span>Blokkert</span>`,
+  };
+  document.getElementById('legend').innerHTML =
+    `<span class="chip o-P">${OWNERS.P.name}</span><span class="chip o-RP">${OWNERS.RP.name}</span>${MODE ? KEYS[MODE] : ''}`;
+})();
+
+/* E · Utleieoversikt */
+if (MODE === 'liste') {
+  const up = stays.filter(s => s.ut > today);
+  const bk = up.filter(s => s.kind === 'r');
+  const cur = bk.find(s => s.inn <= today), nxt = bk.find(s => s.inn > today);
+  const per = { P: 0, RP: 0 };
+  bk.forEach(s => { for (let t = Math.max(s.inn, today); t < s.ut; t += DAY) per[ownerOn(t).who]++; });
+  const split = s => {
+    const c = {};
+    for (let t = s.inn; t < s.ut; t += DAY) { const w = ownerOn(t).who; c[w] = (c[w] || 0) + 1; }
+    return Object.entries(c).map(([w, n]) => `<span class="chip o-${w}">${OWNERS[w].short} ${n}</span>`).join('');
+  };
+  document.getElementById('rent').innerHTML = `
+    <h2>Utleie på Airbnb</h2>
+    <div class="stats">
+      ${cur ? `<div class="stat"><small>Gjest nå</small><b>${cur.label}</b><span>utsjekk ${fmt(cur.ut)}</span></div>` : ''}
+      ${nxt ? `<div class="stat"><small>Neste gjest</small><b>${nxt.label}</b><span>${fmt(nxt.inn)} · ${rel(Math.round((nxt.inn - today) / DAY))}</span></div>` : ''}
+      <div class="stat"><small>Kommende</small><b>${bk.length} bookinger</b><span>${per.P + per.RP} netter</span></div>
+      <div class="stat"><small>Netter i hvem sin uke</small><b>Petter ${per.P} · R & P ${per.RP}</b><span>fra i dag</span></div>
+    </div>
+    <ul class="rlist">${up.map(s => `
+      <li><div><div class="g${s.kind === 'b' ? ' b' : ''}">${s.label}</div>
+        <div class="d">${fmt(s.inn)} – ${fmt(s.ut)}${s.kind === 'r' ? ` · ${nights(s)} ${nights(s) === 1 ? 'natt' : 'netter'}` : ''}</div></div>
+        <div class="chips">${split(s)}</div></li>`).join('')}
+    </ul>`;
+}
 
 /* Ferier */
 (function () {
   const card = h => {
-    const days = [];
-    for (let t = h.from; t <= h.to; t += DAY) days.push(`<div class="day o-${ownerOn(t).who}"><small>${WD[new Date(t).getUTCDay()]}</small><b>${dnum(t)}</b></div>`);
+    const n = Math.round((h.to - h.from) / DAY) + 1, days = [];
+    for (let i = 0; i < n; i++) {
+      const t = h.from + i * DAY, o = ownerOn(t), d = deco(t, i === 0, i === n - 1);
+      days.push(`<div class="day o-${o.who}${d.cls}" title="${dayTitle(t, o)}"><small>${WD[wd(t)]}</small><b>${dnum(t)}</b>${d.html}</div>`);
+    }
     const blocks = h.blocks.slice().sort((a, b) => a.from - b.from).map(b =>
-      `<li>${chip(b.who)}<span class="when">${fmt(b.from)} – ${fmt(b.to)} · ${(b.to - b.from) / DAY + 1} dager</span></li>`).join('');
+      `<li><span class="chip o-${b.who}">${OWNERS[b.who].name}</span><span class="when">${fmt(b.from)} – ${fmt(b.to)} · ${(b.to - b.from) / DAY + 1} dager</span></li>`).join('');
+    const rl = MODE && MODE !== 'stolper' ? rentline(staysIn(h.from, h.to)) : '';
     return `<div class="card"><h3>${h.name}<span>${fmtRange(h.from, h.to)}</span></h3>
-      <div class="days">${days.join('')}</div><ul class="blocks">${blocks}</ul></div>`;
+      <div class="days">${days.join('')}</div><ul class="blocks">${blocks}</ul>${rl}</div>`;
   };
-  const sorted = holidays.slice().sort((a, b) => a.from - b.from);
-  const upcoming = sorted.filter(h => h.to >= today), past = sorted.filter(h => h.to < today);
-  document.getElementById('holidays').innerHTML =
-    upcoming.map(card).join('') +
-    (past.length ? `<details class="past"><summary>Tidligere ferier (${past.length})</summary>${past.map(card).join('')}</details>` : '');
+  document.getElementById('holidays').innerHTML = holidays.filter(h => h.to >= today).sort((a, b) => a.from - b.from).map(card).join('');
 })();
 
 /* Uker */
@@ -181,26 +377,63 @@ const chip = who => `<span class="chip o-${who}">${OWNERS[who].name}</span>`;
   for (let mon = start; mon <= lastEnd; mon += 7 * DAY) {
     const days = [...Array(7)].map((_, i) => mon + i * DAY);
     const os = days.map(ownerOn);
-    const same = os.every(o => o.who === os[0].who);
+    const whos = [...new Set(os.map(o => o.who))];
     const hol = (os.find(o => o.holiday) || {}).holiday;
-    const strip = days.map((t, i) => `<div class="o-${os[i].who}" title="${fmt(t)}: ${OWNERS[os[i].who].name}">${WD[new Date(t).getUTCDay()]}</div>`).join('');
+    const strip = days.map((t, i) => {
+      const d = deco(t, i === 0, i === 6);
+      return `<div class="o-${os[i].who}${d.cls}" title="${dayTitle(t, os[i])}">${WD[wd(t)]}${d.html}</div>`;
+    }).join('');
+    const rl = ['striper', 'spor', 'farge'].includes(MODE) ? rentline(staysIn(mon, mon + 6 * DAY)) : '';
     rows.push(`<li class="week${mon === start ? ' now' : ''}">
       <div class="top"><div class="wk"><b>Uke ${isoWeek(mon)}</b><span>${fmtRange(mon, mon + 6 * DAY)}</span>${hol ? `<span class="tag">· ${hol.name}</span>` : ''}</div>
-      <div>${same ? chip(os[0].who) : os.map(o => o.who).filter((w, i, a) => a.indexOf(w) === i).map(chip).join(' ')}</div></div>
-      <div class="strip">${strip}</div></li>`);
+      <div>${whos.map(w => `<span class="chip o-${w}">${OWNERS[w].name}</span>`).join(' ')}</div></div>
+      <div class="strip">${strip}</div>${rl}</li>`);
   }
-  const list = document.getElementById('weeks');
-  const LIMIT = 8;
+  const list = document.getElementById('weeks'), LIMIT = 8;
   list.innerHTML = rows.map((r, i) => i < LIMIT ? r : r.replace('<li class="week', '<li hidden class="week')).join('');
   const btn = document.getElementById('more');
   if (rows.length > LIMIT) {
     btn.hidden = false;
-    btn.onclick = () => { list.querySelectorAll('[hidden]').forEach(e => e.hidden = false); btn.hidden = true; };
+    btn.onclick = () => { list.querySelectorAll('li[hidden]').forEach(e => e.hidden = false); btn.hidden = true; fitLabels(); };
   }
 })();
 
+/* Stolper: legg navn på hver rad og kort dem av der raden eller oppholdet slutter. */
+function fitLabels() {
+  if (MODE !== 'stolper') return;
+  document.querySelectorAll('.days, .strip').forEach(box => {
+    if (!box.offsetParent) return;
+    box.querySelectorAll('.blabel.auto').forEach(l => l.remove());
+    const rows = [];
+    [...box.children].forEach(c => {
+      const r = rows[rows.length - 1];
+      if (r && r[0].offsetTop === c.offsetTop) r.push(c); else rows.push([c]);
+    });
+    rows.forEach(row => {
+      row.forEach((c, i) => c.querySelectorAll('.band:not(.end)').forEach(b => b.classList.toggle('last', i === row.length - 1)));
+      const first = row[0];
+      first.querySelectorAll('.band.mid').forEach(b => {
+        const k = b.dataset.s, st = stays[k];
+        if (!first.querySelector(`.blabel[data-s="${k}"]`) && !(st.kind === 'b' && nights(st) === 1))
+          first.insertAdjacentHTML('beforeend', `<span class="blabel cont auto${st.kind === 'b' ? ' blk' : ''}" data-s="${k}">${st.label}</span>`);
+      });
+    });
+    box.querySelectorAll('.blabel').forEach(l => {
+      l.hidden = false; l.style.maxWidth = '';
+      const row = rows.find(r => r.includes(l.parentElement));
+      const end = row.map(c => c.querySelector(`.band.end[data-s="${l.dataset.s}"]`)).find(Boolean);
+      const limit = (end || row[row.length - 1]).getBoundingClientRect().right;
+      const max = limit - l.getBoundingClientRect().left - 6;
+      if (max < 24) l.hidden = true; else l.style.maxWidth = max + 'px';
+    });
+  });
+}
+fitLabels();
+addEventListener('resize', fitLabels);
+
 document.getElementById('rules').innerHTML =
-  `Vanlige uker: partallsuker ${OWNERS.P.name}, oddetallsuker ${OWNERS.RP.name} (mandag–søndag, helg inkludert). I feriene deles det, og rekkefølgen byttes fra år til år. Aldri sammen.`;
+  `Vanlige uker: partallsuker ${OWNERS.P.name}, oddetallsuker ${OWNERS.RP.name} (mandag–søndag, helg inkludert). I feriene deles det, og rekkefølgen byttes fra år til år. Aldri sammen.` +
+  (MODE ? ' Airbnb-bookingene er lagt inn for hånd.' : '');
 </script>
 </body>
 </html>
